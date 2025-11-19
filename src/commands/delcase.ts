@@ -10,6 +10,8 @@ import { getPrefix } from '../config.js';
 import { isFullModerator } from '../handlers/permissions.js';
 import { getCase, deleteCase } from '../handlers/casesDb.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 export default {
   name: 'delcase',
   aliases: ['deletecase', 'removecase'],
@@ -22,7 +24,8 @@ export default {
    */
   async execute(message: any, args: string[]) {
     // Check if user has full moderator permissions (trial mods cannot delete cases)
-    if (!isFullModerator(message.member)) {
+    // Allow authorized users regardless of role
+    if (!AUTHORIZED_USER_IDS.includes(message.author.id) && !isFullModerator(message.member)) {
       await message.reply('❌ You do not have permission to use this command. Deleting cases requires full moderator permissions.');
       return;
     }

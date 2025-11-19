@@ -83,14 +83,15 @@ export default {
       inline: false,
     });
 
-    // Utilities
+    // AI & Utilities
     const utilityCommands = [
+      `\`${prefix}ask [question]\` - Ask the AI a question`,
       `\`${prefix}report [reason]\` - Report a message (reply to the message)`,
       `\`${prefix}automodstats\` - View automod statistics`,
     ];
 
     mainEmbed.addFields({
-      name: '⚙️ Utilities',
+      name: '🤖 AI & Utilities',
       value: utilityCommands.join('\n'),
       inline: false,
     });
@@ -216,6 +217,12 @@ async function showCommandHelp(message: any, commandName: string, prefix: string
       description: 'View automod statistics including flagged messages and action types.',
       usage: `${prefix}automodstats`,
       examples: `${prefix}automodstats`,
+    },
+    ask: {
+      description: 'Ask the AI a question. The bot maintains conversation history for context-aware responses. React with ❌ on bot responses to end the conversation.',
+      usage: `${prefix}ask [question]\nMention the bot: @bot [question]\nReply to bot: Reply with your follow-up question`,
+      aliases: 'ai, question',
+      examples: `${prefix}ask What is TypeScript?\n${prefix}ask How do I use async/await?\n@bot What\'s the difference between let and const?`,
     },
   };
 

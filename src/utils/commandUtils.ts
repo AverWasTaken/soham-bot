@@ -5,6 +5,9 @@
 import { GuildMember, Message } from 'discord.js';
 import { isModerator, isFullModerator } from '../handlers/permissions.js';
 
+// Authorized users who can use all commands
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 /**
  * Parse user input to extract user ID from mention or direct ID
  * @param userInput - User mention or ID string
@@ -158,6 +161,11 @@ export async function requireGuild(message: Message): Promise<boolean> {
  * @returns True if moderator, false otherwise (also sends error message)
  */
 export async function requireModerator(message: Message): Promise<boolean> {
+  // Allow authorized users regardless of role
+  if (AUTHORIZED_USER_IDS.includes(message.author.id)) {
+    return true;
+  }
+
   if (!message.member || !isModerator(message.member)) {
     await message.reply('❌ You do not have permission to use this command.');
     return false;
@@ -172,6 +180,11 @@ export async function requireModerator(message: Message): Promise<boolean> {
  * @returns True if full moderator, false otherwise (also sends error message)
  */
 export async function requireFullModerator(message: Message): Promise<boolean> {
+  // Allow authorized users regardless of role
+  if (AUTHORIZED_USER_IDS.includes(message.author.id)) {
+    return true;
+  }
+
   if (!message.member || !isFullModerator(message.member)) {
     await message.reply('❌ You do not have permission to use this command. This command requires full moderator permissions.');
     return false;

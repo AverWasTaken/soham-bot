@@ -10,6 +10,8 @@ import { closeTimezoneDatabase } from './handlers/timezoneDb.js';
 import { startPunishmentCleanup } from './handlers/punishmentTracker.js';
 import { createCooldownTracker, CooldownTracker, canAct, setCooldown, getRemainingCooldown } from './utils/cooldownManager.js';
 import { startAllCleanupTasks, stopAllCleanupTasks } from './utils/cleanupScheduler.js';
+import { startConversationCleanup, stopConversationCleanup } from './handlers/conversationManager.js';
+import { getConversation, deleteConversation, closeDatabase } from './handlers/conversationDb.js';
 import {
   processAutomodRules,
   processGeneralAutomod,
@@ -30,7 +32,7 @@ if (result.error) {
 }
 
 const PREFIX = process.env.PREFIX || 'v!';
-const AUTHORIZED_USER_ID = '932320320222822400';
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
 
 
 /**
@@ -129,6 +131,7 @@ client.once(Events.ClientReady, async () => {
   console.log(`✓ Bot logged in as ${client.user?.tag}`);
   
   // Start all cleanup tasks
+  startConversationCleanup();
   startPunishmentCleanup();
   startAllCleanupTasks();
 });
@@ -154,6 +157,65 @@ client.on('messageCreate', async (message) => {
     return; // Appeal message was handled
   }
 
+  // Check if bot is mentioned (ping to ask) - only for authorized users
+  if (message.mentions.has(client.user?.id || '') && AUTHORIZED_USER_IDS.includes(message.author.id)) {
+    const askCommand = botClient.commands.get('ask');
+    if (askCommand) {
+      // Remove the bot mention from the message and treat rest as question
+      let content = message.content.replace(/<@!?(\d+)>/g, '').trim();
+      
+      if (content) {
+        const args = content.split(/ +/);
+        try {
+          await askCommand.execute(message, args);
+          return;
+        } catch (error) {
+          console.error('Error executing ask via mention:', error);
+          await message.reply({
+            content: 'There was an error processing your question!',
+          });
+          return;
+        }
+      } else {
+        await message.reply('Please include a question when you mention me! Example: `@bot What is TypeScript?`');
+        return;
+      }
+    }
+  }
+
+  // Check if this is a reply to the bot (for conversation continuation) - only for authorized users
+  if (message.reference && message.type === 19 && AUTHORIZED_USER_IDS.includes(message.author.id)) { // Type 19 is REPLY
+    try {
+      const repliedTo = await message.fetchReference();
+      
+      // Check if replying to the bot and user has an active conversation
+      if (repliedTo.author.id === client.user?.id) {
+        const conversation = await getConversation(message.author.id);
+        
+        if (conversation.length > 0) {
+          // Check if the replied message has the conversation footer
+          const hasConversationFooter = repliedTo.embeds.some((embed: any) => 
+            embed.footer?.text?.includes('React with ❌ to end this conversation')
+          );
+          
+          if (hasConversationFooter) {
+            // User is replying to bot and has active conversation
+            const askCommand = botClient.commands.get('ask');
+            if (askCommand) {
+              // Treat the reply as a continuation of the conversation
+              const args = message.content.trim().split(/ +/);
+              await askCommand.execute(message, args);
+              return;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // If fetching reference fails, just continue to normal message handling
+      console.error('Error handling reply:', error);
+    }
+  }
+
   // Handle prefix commands
   if (!message.content.startsWith(PREFIX)) return;
 
@@ -165,8 +227,8 @@ client.on('messageCreate', async (message) => {
   const command = botClient.commands.get(commandName);
   if (!command) return;
 
-  // Check authorization - only AUTHORIZED_USER_ID can use commands
-  if (message.author.id !== AUTHORIZED_USER_ID) {
+  // Check authorization - only authorized users can use commands
+  if (!AUTHORIZED_USER_IDS.includes(message.author.id)) {
     await message.reply('❌ You do not have permission to use bot commands.');
     return;
   }
@@ -213,13 +275,63 @@ client.on('messageCreate', async (message) => {
 
 
 /**
+ * Event: Reaction added (handle conversation end)
+ */
+client.on('messageReactionAdd', async (reaction, user) => {
+  // Ignore bot reactions
+  if (user.bot) return;
+
+  // Only for authorized users
+  if (!AUTHORIZED_USER_IDS.includes(user.id)) return;
+
+  // Handle partial reactions (fetch full reaction if needed)
+  if (reaction.partial) {
+    try {
+      await reaction.fetch();
+    } catch (error) {
+      console.error('Error fetching reaction:', error);
+      return;
+    }
+  }
+
+  // Check if reaction is ❌ and message is from bot
+  if (reaction.emoji.name === '❌' && reaction.message.author?.id === client.user?.id) {
+    try {
+      // Fetch the full message if partial
+      if (reaction.message.partial) {
+        await reaction.message.fetch();
+      }
+
+      // Verify the user actually has an active conversation
+      const conversation = await getConversation(user.id);
+      if (conversation.length === 0) {
+        // No active conversation, ignore
+        return;
+      }
+
+      // Delete the user's conversation
+      await deleteConversation(user.id);
+      
+      // Confirm deletion with a reply
+      await reaction.message.reply(`✅ <@${user.id}> Conversation ended and history cleared!`);
+      
+      console.log(`Conversation cleared for ${user.tag} (${user.id}) via reaction`);
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+    }
+  }
+});
+
+/**
  * Handle graceful shutdown
  */
 async function gracefulShutdown() {
   if ((global as any).__isShuttingDown) return;
   (global as any).__isShuttingDown = true;
   console.log('\n✓ Shutting down gracefully...');
+  stopConversationCleanup();
   stopAllCleanupTasks();
+  await closeDatabase();
   closeCasesDatabase();
   closeAppealsDatabase();
   closeModActionsDatabase();

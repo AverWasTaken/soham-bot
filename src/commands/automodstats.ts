@@ -12,6 +12,8 @@ import { getUserInfractions, getRecentInfractionCount } from '../handlers/automo
 import { parseUserInput } from '../utils/commandUtils.js';
 import { getPrefix } from '../config.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 export default {
   name: 'automodstats',
   aliases: ['amstats', 'infractions', 'ams'],
@@ -24,7 +26,7 @@ export default {
    */
   async execute(message: Message, args: string[]) {
     // Check if user has moderator permissions
-    if (!message.member || !isModerator(message.member)) {
+    if (!AUTHORIZED_USER_IDS.includes(message.author.id) && (!message.member || !isModerator(message.member))) {
       await message.reply('❌ You do not have permission to use this command.');
       return;
     }

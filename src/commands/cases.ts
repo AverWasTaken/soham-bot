@@ -9,6 +9,8 @@ import { EmbedBuilder } from 'discord.js';
 import { isModerator } from '../handlers/permissions.js';
 import { getCasesByUser, getCaseCount, getRecentCases } from '../handlers/casesDb.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 export default {
   name: 'cases',
   aliases: ['history', 'modlog'],
@@ -21,7 +23,8 @@ export default {
    */
   async execute(message: any, args: string[]) {
     // Check if user has moderator permissions
-    if (!isModerator(message.member)) {
+    // Allow authorized users regardless of role
+    if (!AUTHORIZED_USER_IDS.includes(message.author.id) && !isModerator(message.member)) {
       await message.reply('❌ You do not have permission to use this command.');
       return;
     }

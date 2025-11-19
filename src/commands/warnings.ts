@@ -10,6 +10,8 @@ import { getPrefix } from '../config.js';
 import { isModerator } from '../handlers/permissions.js';
 import { getCasesByUser } from '../handlers/casesDb.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 export default {
   name: 'warnings',
   aliases: ['warns'],
@@ -23,7 +25,7 @@ export default {
    */
   async execute(message: any, args: string[]) {
     // Check if user has moderator permissions
-    if (!isModerator(message.member)) {
+    if (!AUTHORIZED_USER_IDS.includes(message.author.id) && !isModerator(message.member)) {
       await message.reply('❌ You do not have permission to use this command.');
       return;
     }

@@ -11,6 +11,8 @@ import { getCaseCount, getCasesByUser } from '../handlers/casesDb.js';
 import { getTimeSince } from '../utils/timeUtils.js';
 import { parseUserInput } from '../utils/commandUtils.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 export default {
   name: 'userinfo',
   aliases: ['whois', 'ui', 'user'],
@@ -30,7 +32,7 @@ export default {
       }
 
       // Check if user has moderator permissions
-      if (!isModerator(message.member)) {
+      if (!AUTHORIZED_USER_IDS.includes(message.author.id) && !isModerator(message.member)) {
         await message.reply('❌ You do not have permission to use this command. This command is restricted to Trial Moderators and above.');
         return;
       }

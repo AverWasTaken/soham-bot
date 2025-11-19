@@ -16,6 +16,8 @@ import { getPrefix } from '../config.js';
 import type { DiscordCommand } from '../types/command.js';
 import { replyWithAutoDelete } from '../utils/replyUtils.js';
 
+const AUTHORIZED_USER_IDS = ['932320320222822400', '685580500596686967', '1407154399783948389'];
+
 const command: DiscordCommand = {
   name: 'purge',
   aliases: ['clear', 'prune'],
@@ -29,7 +31,7 @@ const command: DiscordCommand = {
    */
   async execute(message: any, args: string[]) {
     // Check if user has moderator permissions
-    if (!isModerator(message.member)) {
+    if (!AUTHORIZED_USER_IDS.includes(message.author.id) && !isModerator(message.member)) {
       await message.reply('❌ You do not have permission to use this command.');
       return;
     }
