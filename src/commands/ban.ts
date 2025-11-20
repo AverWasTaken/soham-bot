@@ -119,7 +119,7 @@ export default {
         deleteMessageSeconds: 86400, // Delete messages from last 24 hours
       });
 
-      // Log to webhook and database
+      // Log to database
       const caseId = await logModAction({
         type: ModActionType.BAN,
         moderator: {
