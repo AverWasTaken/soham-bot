@@ -4,6 +4,7 @@ package-lock.json
 yarn.lock
 
 *.md
+*.db
 
 # Environment variables
 .env
