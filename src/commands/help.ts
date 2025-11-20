@@ -28,7 +28,7 @@ export default {
     // Create main help embed
     const mainEmbed = new EmbedBuilder()
       .setColor(0x0099FF)
-      .setTitle('📚 Moderation Bot - Command Help')
+      .setTitle('Moderation Bot - Command Help')
       .setDescription(
         `Use \`${prefix}help [command]\` for detailed information about a specific command.\n` +
         `**Prefix:** \`${prefix}\``
@@ -49,7 +49,7 @@ export default {
     ];
 
     mainEmbed.addFields({
-      name: '🛡️ Moderation Commands',
+      name: 'Moderation Commands',
       value: moderationCommands.join('\n'),
       inline: false,
     });
@@ -65,7 +65,7 @@ export default {
     ];
 
     mainEmbed.addFields({
-      name: '📋 Case Management',
+      name: 'Case Management',
       value: caseCommands.join('\n'),
       inline: false,
     });
@@ -78,7 +78,7 @@ export default {
     ];
 
     mainEmbed.addFields({
-      name: '🤝 Appeal Management',
+      name: 'Appeal Management',
       value: appealCommands.join('\n'),
       inline: false,
     });
@@ -91,7 +91,7 @@ export default {
     ];
 
     mainEmbed.addFields({
-      name: '🤖 AI & Utilities',
+      name: 'AI & Utilities',
       value: utilityCommands.join('\n'),
       inline: false,
     });
@@ -235,17 +235,17 @@ async function showCommandHelp(message: any, commandName: string, prefix: string
 
   const embed = new EmbedBuilder()
     .setColor(0x0099FF)
-    .setTitle(`📖 Help: ${prefix}${commandName}`)
+    .setTitle(`Help: ${prefix}${commandName}`)
     .setDescription(command.description)
-    .addFields({ name: '📝 Usage', value: `\`\`\`${command.usage}\`\`\``, inline: false })
+    .addFields({ name: 'Usage', value: `\`\`\`${command.usage}\`\`\``, inline: false })
     .setTimestamp();
 
   if (command.aliases) {
-    embed.addFields({ name: '🔄 Aliases', value: command.aliases, inline: true });
+    embed.addFields({ name: 'Aliases', value: command.aliases, inline: true });
   }
 
   if (command.examples) {
-    embed.addFields({ name: '💡 Examples', value: `\`\`\`${command.examples}\`\`\``, inline: false });
+    embed.addFields({ name: 'Examples', value: `\`\`\`${command.examples}\`\`\``, inline: false });
   }
 
   await message.reply({ embeds: [embed] });
