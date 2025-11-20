@@ -6,6 +6,7 @@
  */
 
 import { EmbedBuilder, Message, PermissionFlagsBits } from 'discord.js';
+import { logModAction, ModActionType } from '../handlers/modLog.js';
 import { trackPunishment } from '../handlers/punishmentTracker.js';
 import { logModeratorAction } from '../handlers/modActionsDb.js';
 import {
@@ -112,6 +113,24 @@ export default {
       // Kick the user
       await memberToKick.kick(`${reason} | Kicked by ${message.author.tag}`);
 
+      // Log to database
+      const caseId = await logModAction({
+        type: ModActionType.KICK,
+        moderator: {
+          tag: message.author.tag,
+          id: message.author.id,
+        },
+        target: {
+          tag: memberToKick.user.tag,
+          id: memberToKick.id,
+        },
+        reason,
+        guild: {
+          name: message.guild!.name,
+          id: message.guild!.id,
+        },
+      });
+
       // Log moderator action
       logModeratorAction({
         moderatorId: message.author.id,
@@ -122,7 +141,7 @@ export default {
         reason,
         guildId: message.guild!.id,
         guildName: message.guild!.name,
-        caseId: undefined,
+        caseId,
       });
 
       // Send confirmation embed
